@@ -349,14 +349,16 @@ public:
 		bIsIgnoringLock = bIgnoreThreadIfNullLock;
 		if (!bIgnoreThreadIfNullLock) 
 		{ 
-			check(IsInGameThread()); 
+			//temp fix for getsection
+			//check(IsInGameThread()); 
 		} 
 	}
 	virtual void Unlock() override 
 	{ 
 		if (!bIsIgnoringLock)
 		{
-			check(IsInGameThread());
+			//temp fix for getsection
+			//check(IsInGameThread());
 		}
 	}
 };

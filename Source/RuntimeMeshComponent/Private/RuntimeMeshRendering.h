@@ -104,9 +104,14 @@ public:
 		uint32 TangentZOffset = 0;
 		EVertexElementType TangentElementType = VET_None;
 
+
 		if (bUseHighPrecision)
 		{
+#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 20
+			TangentElementType = VET_Short4N;
+#else
 			TangentElementType = VET_UShort4N;
+#endif
 			TangentSizeInBytes = sizeof(FRuntimeMeshTangentsHighPrecision);
 			TangentXOffset = offsetof(FRuntimeMeshTangentsHighPrecision, Tangent);
 			TangentZOffset = offsetof(FRuntimeMeshTangentsHighPrecision, Normal);
@@ -275,8 +280,11 @@ public:
 
 	virtual void InitRHI() override;
 
+	///* Get the size of the index buffer */
+	//int32 Num() { return NumIndices; }
+
 	/* Get the size of the index buffer */
-	int32 Num() { return NumIndices; }
+	int32 Num() const { return NumIndices; }
 
 	/** Gets the full allocated size of the buffer (Equal to IndexSize * NumIndices) */
 	int32 GetBufferSize() const { return NumIndices * IndexSize; }
@@ -299,13 +307,13 @@ public:
 	void Init(FLocalVertexFactory::FDataType VertexStructure);
 
 	/* Gets the section visibility for static sections */	
-#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 19
-	virtual uint64 GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch, const void* InViewCustomData = nullptr) const override;
-#else
-	virtual uint64 GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch) const override;
-#endif
-
+//#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 19
+//	virtual uint64 GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch, const void* InViewCustomData = nullptr) const override;
+//#else
+//	virtual uint64 GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch) const override;
+//#endif
+//
 private:
 	/* Interface to the parent section for checking visibility.*/
-	FRuntimeMeshSectionProxy * SectionParent;
+//	FRuntimeMeshSectionProxy * SectionParent;
 };

@@ -13,6 +13,10 @@ FRuntimeMeshComponentSceneProxy::FRuntimeMeshComponentSceneProxy(URuntimeMeshCom
 	: FPrimitiveSceneProxy(Component)
 	, BodySetup(Component->GetBodySetup())
 {
+
+	const auto FeatureLevel = GetScene().GetFeatureLevel();
+	// We always use local vertex factory, which gets its primitive data from GPUScene, so we can skip expensive primitive uniform buffer updates
+	bVFRequiresPrimitiveUniformBuffer = !UseGPUScene(GMaxRHIShaderPlatform, FeatureLevel);
 	bStaticElementsAlwaysUseProxyPrimitiveUniformBuffer = true;
 
 	check(Component->GetRuntimeMesh() != nullptr);
@@ -62,6 +66,20 @@ void FRuntimeMeshComponentSceneProxy::CreateRenderThreadResources()
 
 FPrimitiveViewRelevance FRuntimeMeshComponentSceneProxy::GetViewRelevance(const FSceneView* View) const
 {
+	//FPrimitiveViewRelevance Result;
+	//Result.bDrawRelevance = IsShown(View);
+	//Result.bShadowRelevance = IsShadowCast(View);
+
+	//bool bForceDynamicPath = !IsStaticPathAvailable() || IsRichView(*View->Family) || IsSelected() || View->Family->EngineShowFlags.Wireframe;
+	//Result.bStaticRelevance = !bForceDynamicPath && bHasStaticSections;
+	//Result.bDynamicRelevance = bForceDynamicPath || bHasDynamicSections;
+
+	//Result.bRenderInMainPass = ShouldRenderInMainPass();
+	//Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
+	//Result.bRenderCustomDepth = ShouldRenderCustomDepth();
+	//MaterialRelevance.SetPrimitiveViewRelevance(Result);
+	//return Result;
+
 	FPrimitiveViewRelevance Result;
 	Result.bDrawRelevance = IsShown(View);
 	Result.bShadowRelevance = IsShadowCast(View);
@@ -74,6 +92,12 @@ FPrimitiveViewRelevance FRuntimeMeshComponentSceneProxy::GetViewRelevance(const 
 	Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
 	Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 	MaterialRelevance.SetPrimitiveViewRelevance(Result);
+	Result.bTranslucentSelfShadow = bCastVolumetricTranslucentShadow;
+#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 25
+	Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
+#else
+	Result.bVelocityRelevance = IsMovable() && Result.bOpaqueRelevance && Result.bRenderInMainPass;
+#endif
 	return Result;
 }
 
@@ -81,16 +105,46 @@ void FRuntimeMeshComponentSceneProxy::CreateMeshBatch(FMeshBatch& MeshBatch, con
 {
 	bool bRenderWireframe = WireframeMaterial != nullptr;
 	bool bWantsAdjacency = !bRenderWireframe && RenderData.bWantsAdjacencyInfo;
+	bool bForRayTracing = false;
+
 
 	Section->CreateMeshBatch(MeshBatch, bWantsAdjacency);
-	MeshBatch.bWireframe = WireframeMaterial != nullptr;
-	MeshBatch.MaterialRenderProxy = MeshBatch.bWireframe ? WireframeMaterial : Material;
 
+	//gallon fixes lol
+	const FRuntimeMeshIndexBuffer* CurrentIndexBuffer =
+		(bWantsAdjacency ?
+			Section->GetAdjacencyIndexBuffer() :
+			Section->GetIndexBuffer());
+
+
+	int32 NumIndicesPerTriangle = bWantsAdjacency ? 12 : 3;
+	int32 NumPrimitives = CurrentIndexBuffer->Num() / NumIndicesPerTriangle;
+	MeshBatch.VertexFactory = Section->GetVertexFactory();
+
+
+	MeshBatch.bWireframe = WireframeMaterial != nullptr;
+
+	MeshBatch.MaterialRenderProxy = MeshBatch.bWireframe ? WireframeMaterial : Material;
 	MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
+
+	MeshBatch.DepthPriorityGroup = SDPG_World;
 	MeshBatch.bCanApplyViewModeOverrides = true;
 
-	//HORU: 4.22 compat
-	//FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+
+	//timur-losev fixes starting at 4.23
+	FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+	BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
+	BatchElement.IndexBuffer = CurrentIndexBuffer;
+	BatchElement.FirstIndex = 0;
+	BatchElement.NumPrimitives = NumPrimitives;
+	BatchElement.MinVertexIndex = 0;
+	BatchElement.MaxVertexIndex = Section->GetPositionBuffer()->Num() - 1;
+
+	//if (!bForRayTracing)
+	//{
+	//	BatchElement.MaxScreenSize = 1.0f;
+	//	BatchElement.MinScreenSize = .01f;
+	//}
 }
 
 void FRuntimeMeshComponentSceneProxy::DrawStaticElements(FStaticPrimitiveDrawInterface* PDI)
@@ -104,8 +158,14 @@ void FRuntimeMeshComponentSceneProxy::DrawStaticElements(FStaticPrimitiveDrawInt
 			FMaterialRenderProxy* Material = RenderData.Material->GetRenderProxy();
 
 			FMeshBatch MeshBatch;
+			MeshBatch.LODIndex = 0;
+			MeshBatch.SegmentIndex = SectionEntry.Key;
+
 			CreateMeshBatch(MeshBatch, Section, RenderData, Material, nullptr);
-			PDI->DrawMesh(MeshBatch, FLT_MAX);
+			PDI->DrawMesh(MeshBatch, 1.0f);
+
+			// Here we add a reference to the buffers so that we can guarantee these stay around for the life of this proxy
+			InUseBuffers.Add(Section);
 		}
 	}
 }
@@ -132,22 +192,26 @@ void FRuntimeMeshComponentSceneProxy::GetDynamicMeshElements(const TArray<const 
 		FRuntimeMeshSectionProxyPtr Section = SectionEntry.Value;
 		if (SectionRenderData.Contains(SectionEntry.Key) && Section.IsValid() && Section->ShouldRender())
 		{
-			// Add the mesh batch to every view it's visible in
-			for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+			//fix - for null RHI resource crash at Colector.Addmesh because section index buffer has 0 items
+			if (Section->CanRender())
 			{
-				if (VisibilityMap & (1 << ViewIndex))
+				// Add the mesh batch to every view it's visible in
+				for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 				{
-					bool bForceDynamicPath = IsRichView(*Views[ViewIndex]->Family) || Views[ViewIndex]->Family->EngineShowFlags.Wireframe || IsSelected() || !IsStaticPathAvailable();
-
-					if (bForceDynamicPath || !Section->WantsToRenderInStaticPath())
+					if (VisibilityMap & (1 << ViewIndex))
 					{
-						const FRuntimeMeshSectionRenderData& RenderData = SectionRenderData[SectionEntry.Key];
-						FMaterialRenderProxy* Material = RenderData.Material->GetRenderProxy();
+						bool bForceDynamicPath = IsRichView(*Views[ViewIndex]->Family) || Views[ViewIndex]->Family->EngineShowFlags.Wireframe || IsSelected() || !IsStaticPathAvailable();
 
-						FMeshBatch& MeshBatch = Collector.AllocateMesh();
-						CreateMeshBatch(MeshBatch, Section, RenderData, Material, WireframeMaterialInstance);
+						if (bForceDynamicPath || !Section->WantsToRenderInStaticPath())
+						{
+							const FRuntimeMeshSectionRenderData& RenderData = SectionRenderData[SectionEntry.Key];
+							FMaterialRenderProxy* Material = RenderData.Material->GetRenderProxy();
 
-						Collector.AddMesh(ViewIndex, MeshBatch);
+							FMeshBatch& MeshBatch = Collector.AllocateMesh();
+							CreateMeshBatch(MeshBatch, Section, RenderData, Material, WireframeMaterialInstance);
+
+							Collector.AddMesh(ViewIndex, MeshBatch);
+						}
 					}
 				}
 			}

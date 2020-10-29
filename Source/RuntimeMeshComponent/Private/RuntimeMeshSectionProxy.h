@@ -70,6 +70,12 @@ public:
 
 	FRuntimeMeshVertexFactory* GetVertexFactory() { return &VertexFactory; }
 
+	FRuntimeMeshIndexBuffer* GetAdjacencyIndexBuffer() { return &AdjacencyIndexBuffer; }
+
+	FRuntimeMeshIndexBuffer* GetIndexBuffer() { return &IndexBuffer; }
+
+	FRuntimeMeshPositionVertexBuffer* GetPositionBuffer() { return &PositionBuffer; }
+
 	void CreateMeshBatch(FMeshBatch& MeshBatch, bool bWantsAdjacencyInfo);
 
 	void BuildVertexDataType(FLocalVertexFactory::FDataType& DataType);

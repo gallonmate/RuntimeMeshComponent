@@ -25,6 +25,13 @@ private:
 
 	TMap<int32, FRuntimeMeshSectionRenderData> SectionRenderData;
 
+
+	// Reference all the in-use buffers so that as long as this proxy is around these buffers will be too. 
+	// This is meant only for statically drawn sections. Dynamically drawn sections can update safely in place.
+	// Static sections get new buffers on each update.
+	TArray<TSharedPtr<FRuntimeMeshSectionProxy>> InUseBuffers;
+
+
 	// Reference to the body setup for rendering.
 	UBodySetup* BodySetup;
 

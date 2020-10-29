@@ -496,7 +496,7 @@ public:
 
 	TUniquePtr<FRuntimeMeshScopedUpdater> GetSectionReadonly(int32 SectionId)
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return GetOrCreateRuntimeMesh()->GetSectionReadonly(SectionId);
 	}
 
@@ -714,6 +714,42 @@ public:
 		}
 		return 0;
 	}
+
+	///** Grab geometry data from a ProceduralMeshComponent. */
+	//UFUNCTION(BlueprintCallable, Category = "Components|ProceduralMesh")
+	//	static void GetSectionFromProceduralMesh(UProceduralMeshComponent* InProcMesh, int32 SectionIndex, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FProcMeshTangent>& Tangents);
+
+
+	/** Returns section data from this component */
+	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")
+	static void GetSectionFromRuntimeMesh(URuntimeMeshComponent* InMesh, int32 SectionIndex, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FRuntimeMeshTangent>& Tangents);
+
+
+	//{
+	//	if (URuntimeMesh* Mesh = GetRuntimeMesh())
+	//	{
+	//		auto Section = Mesh->GetSectionReadonly(SectionIndex);
+
+	//		const int32 NumOutputVerts = Section->NumVertices();
+
+	//		// Allocate output buffers for vert data
+	//		TArray<FVector> Vertices;
+	//		Vertices.SetNumUninitialized(NumOutputVerts);
+
+	//		// copy data
+	//		for (int32 VertIdx = 0; VertIdx < NumOutputVerts; VertIdx++)
+	//		{
+	//			const FRuntimeMeshAccessorVertex& Vert = Section->GetVertex[VertIdx];
+	//			Vertices[VertIdx] = Vert.Position;
+	//		}
+
+	//		return Vertices;
+	//	}
+
+	//	return nullptr;
+	//}
+
+
 
 	/** Returns whether a particular section currently exists */
 	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")

@@ -379,7 +379,7 @@ public:
 
 	TUniquePtr<FRuntimeMeshScopedUpdater> GetSectionReadonly(int32 SectionId)
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return GetRuntimeMeshData()->GetSectionReadonly(SectionId);
 	}
 
@@ -534,7 +534,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")
 	UMaterialInterface* GetSectionMaterial(int32 SectionId)
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		if (Materials.IsValidIndex(SectionId))
 		{
 			return Materials[SectionId];
@@ -544,7 +544,7 @@ public:
 
 	TArray<UMaterialInterface*> GetMaterials()
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return Materials;
 	}
 
@@ -611,7 +611,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")
 	int32 GetNumSections() const
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return GetRuntimeMeshData()->GetNumSections();
 	}
 
@@ -619,7 +619,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")
 	bool DoesSectionExist(int32 SectionIndex) const
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return GetRuntimeMeshData()->DoesSectionExist(SectionIndex);
 	}
 
@@ -627,7 +627,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Components|RuntimeMesh")
 	int32 GetAvailableSectionIndex() const
 	{
-		check(IsInGameThread());
+		//check(IsInGameThread());
 		return GetRuntimeMeshData()->GetAvailableSectionIndex();
 	}
 

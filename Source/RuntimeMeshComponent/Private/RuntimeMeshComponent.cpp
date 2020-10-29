@@ -171,6 +171,52 @@ UMaterialInterface* URuntimeMeshComponent::GetMaterial(int32 ElementIndex) const
 	return nullptr;
 }
 
+void URuntimeMeshComponent::GetSectionFromRuntimeMesh(URuntimeMeshComponent* InMesh, int32 SectionIndex, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FRuntimeMeshTangent>& Tangents)
+
+{
+	//if (URuntimeMesh* InMesh = GetRuntimeMesh())
+	if (InMesh != nullptr)
+	{
+
+		auto Section = InMesh->GetSectionReadonly(SectionIndex);
+
+		const int32 NumOutputVerts = Section->NumVertices();
+
+		// Allocate output buffers for vert data
+		Vertices.SetNumUninitialized(NumOutputVerts);
+		Normals.SetNumUninitialized(NumOutputVerts);
+		UVs.SetNumUninitialized(NumOutputVerts);
+		Tangents.SetNumUninitialized(NumOutputVerts);
+
+		// copy data
+		for (int32 VertIdx = 0; VertIdx < NumOutputVerts; VertIdx++)
+		{
+			const FRuntimeMeshAccessorVertex& Vert = Section->GetVertex(VertIdx);
+			Vertices[VertIdx] = Vert.Position;
+			Normals[VertIdx] = Vert.Normal;
+			UVs[VertIdx] = Vert.UVs[0];
+			Tangents[VertIdx] = Vert.Tangent;
+		}
+
+		// Copy index buffer
+		const int32 NumIndices = Section->NumIndices();
+		Triangles.SetNumUninitialized(NumIndices);
+		for (int32 IndexIdx = 0; IndexIdx < NumIndices; IndexIdx++)
+		{
+			Triangles[IndexIdx] = Section->GetIndex(IndexIdx);
+		}
+
+		//return Vertices;
+	}
+
+	return;
+}
+
+
+
+
+
+
 UMaterialInterface* URuntimeMeshComponent::GetOverrideMaterial(int32 ElementIndex) const
 {
 	return Super::GetMaterial(ElementIndex);

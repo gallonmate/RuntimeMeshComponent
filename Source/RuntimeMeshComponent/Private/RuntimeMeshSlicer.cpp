@@ -468,7 +468,8 @@ void URuntimeMeshSlicer::SliceRuntimeMeshSection(const FRuntimeMeshDataPtr& InRu
 	// Add the mesh data to the other mesh if we're building the other mesh and have valid geometry.
 	if (bShouldCreateOtherHalf && OtherMeshData->NumVertices() > 0 && OtherMeshData->NumIndices() > 0)
 	{
-		OutOtherHalf->CreateMeshSection(SectionIndex, MoveTemp(OtherMeshData));
+
+ 		OutOtherHalf->CreateMeshSection(SectionIndex, MoveTemp(OtherMeshData), false, EUpdateFrequency::Infrequent);
 	}
 
 	// Update this runtime mesh, or clear it if we have no geometry
@@ -702,7 +703,7 @@ void URuntimeMeshSlicer::SliceRuntimeMesh(URuntimeMesh* InRuntimeMesh, FVector P
 		}
 		
 		// Slice the collision
-		SliceRuntimeMeshConvexCollision(InRuntimeMesh, OutOtherHalf, PlanePosition, PlaneNormal);
+		//SliceRuntimeMeshConvexCollision(InRuntimeMesh, OutOtherHalf, PlanePosition, PlaneNormal);
 	}
 }
 

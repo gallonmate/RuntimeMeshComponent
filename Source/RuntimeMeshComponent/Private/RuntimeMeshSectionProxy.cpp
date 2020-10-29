@@ -72,7 +72,8 @@ bool FRuntimeMeshSectionProxy::ShouldRender()
 
 bool FRuntimeMeshSectionProxy::CanRender()
 {
-	if (PositionBuffer.Num() <= 0)
+	//fix - added indexbuffercheck
+	if (PositionBuffer.Num() <= 0 || IndexBuffer.Num() <= 0)
 	{
 		return false;
 	}

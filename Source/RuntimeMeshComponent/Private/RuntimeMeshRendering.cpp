@@ -93,7 +93,8 @@ void FRuntimeMeshIndexBuffer::InitRHI()
 	{
 		// Create the index buffer
 		FRHIResourceCreateInfo CreateInfo;
-		IndexBufferRHI = RHICreateIndexBuffer(IndexSize, GetBufferSize(), BUF_Dynamic, CreateInfo);
+		//IndexBufferRHI = RHICreateIndexBuffer(IndexSize, GetBufferSize(), BUF_Dynamic, CreateInfo); //performance fix by ReturnZero23 
+		IndexBufferRHI = RHICreateIndexBuffer(IndexSize, GetBufferSize(), UsageFlags | BUF_ShaderResource, CreateInfo);
 	}
 }
 
@@ -134,15 +135,17 @@ void FRuntimeMeshIndexBuffer::SetData(const TArray<uint8>& Data)
 
 
 
+
 FRuntimeMeshVertexFactory::FRuntimeMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, FRuntimeMeshSectionProxy* InSectionParent)
 	: FLocalVertexFactory(
 #if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 19
 		InFeatureLevel, "FRuntimeMeshVertexFactory"
 #endif
 	)
-	, SectionParent(InSectionParent)
+	//, SectionParent(InSectionParent)
 {
 }
+
 
 /** Init function that can be called on any thread, and will do the right thing (enqueue command if called on main thread) */
 void FRuntimeMeshVertexFactory::Init(FLocalVertexFactory::FDataType VertexStructure)
@@ -167,11 +170,11 @@ void FRuntimeMeshVertexFactory::Init(FLocalVertexFactory::FDataType VertexStruct
 /* Gets the section visibility for static sections */
 
 
-#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 19
-uint64 FRuntimeMeshVertexFactory::GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch, const void* InViewCustomData) const
-#else
-uint64 FRuntimeMeshVertexFactory::GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch) const
-#endif
-{
-	return SectionParent->ShouldRender();
-}
+//#if ENGINE_MAJOR_VERSION >= 4 && ENGINE_MINOR_VERSION >= 19
+//uint64 FRuntimeMeshVertexFactory::GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch, const void* InViewCustomData) const
+//#else
+//uint64 FRuntimeMeshVertexFactory::GetStaticBatchElementVisibility(const class FSceneView& View, const struct FMeshBatch* Batch) const
+//#endif
+//{
+//	return SectionParent->ShouldRender();
+//}
