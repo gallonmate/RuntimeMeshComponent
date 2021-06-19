@@ -865,11 +865,11 @@ private:
 
 private:
 	void CreateMeshSectionFromComponents(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
-		const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, TFunction<FColor(int32 Index)> ColorAccessor, int32 NumColors, const TArray<FRuntimeMeshTangent>& Tangents,
+		const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FColor>& ColorAccessor, int32 NumColors, const TArray<FRuntimeMeshTangent>& Tangents,
 		bool bCreateCollision, EUpdateFrequency UpdateFrequency, ESectionUpdateFlags UpdateFlags, bool bUseHighPrecisionTangents, bool bUseHighPrecisionUVs, bool bWantsSecondUV);
 
 	void UpdateMeshSectionFromComponents(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
-		const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, TFunction<FColor(int32 Index)> ColorAccessor, int32 NumColors, const TArray<FRuntimeMeshTangent>& Tangents, ESectionUpdateFlags UpdateFlags);
+		const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FColor>& ColorAccessor, int32 NumColors, const TArray<FRuntimeMeshTangent>& Tangents, ESectionUpdateFlags UpdateFlags);
 
 public:
 
@@ -902,12 +902,12 @@ public:
 	
 
 	void CreateMeshSection_Blueprint(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
-		const TArray<FRuntimeMeshTangent>& Tangents, const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FLinearColor>& Colors,
+		const TArray<FRuntimeMeshTangent>& Tangents, const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FColor>& Colors,
 		bool bCreateCollision = false, bool bCalculateNormalTangent = false, bool bShouldCreateHardTangents = false, bool bGenerateTessellationTriangles = false, 
 		EUpdateFrequency UpdateFrequency = EUpdateFrequency::Average, bool bUseHighPrecisionTangents = false, bool bUseHighPrecisionUVs = true);
 	
 	void UpdateMeshSection_Blueprint(int32 SectionIndex, const TArray<FVector>& Vertices, const TArray<int32>& Triangles, const TArray<FVector>& Normals,
-		const TArray<FRuntimeMeshTangent>& Tangents, const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FLinearColor>& Colors,
+		const TArray<FRuntimeMeshTangent>& Tangents, const TArray<FVector2D>& UV0, const TArray<FVector2D>& UV1, const TArray<FColor>& Colors,
 		bool bCalculateNormalTangent = false, bool bShouldCreateHardTangents = false, bool bGenerateTessellationTriangles = false);
 	
 	void CreateMeshSectionPacked_Blueprint(int32 SectionIndex, const TArray<FRuntimeMeshBlueprintVertexSimple>& Vertices, const TArray<int32>& Triangles,

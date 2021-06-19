@@ -171,9 +171,10 @@ UMaterialInterface* URuntimeMeshComponent::GetMaterial(int32 ElementIndex) const
 	return nullptr;
 }
 
-void URuntimeMeshComponent::GetSectionFromRuntimeMesh(URuntimeMeshComponent* InMesh, int32 SectionIndex, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FRuntimeMeshTangent>& Tangents)
+void URuntimeMeshComponent::GetSectionFromRuntimeMesh(URuntimeMeshComponent* InMesh, int32 SectionIndex, TArray<FVector>& Vertices, TArray<int32>& Triangles, TArray<FVector>& Normals, TArray<FVector2D>& UVs, TArray<FRuntimeMeshTangent>& Tangents, TArray<FColor>& Colors)
 
 {
+
 	//if (URuntimeMesh* InMesh = GetRuntimeMesh())
 	if (InMesh != nullptr)
 	{
@@ -187,6 +188,7 @@ void URuntimeMeshComponent::GetSectionFromRuntimeMesh(URuntimeMeshComponent* InM
 		Normals.SetNumUninitialized(NumOutputVerts);
 		UVs.SetNumUninitialized(NumOutputVerts);
 		Tangents.SetNumUninitialized(NumOutputVerts);
+		Colors.SetNumUninitialized(NumOutputVerts);
 
 		// copy data
 		for (int32 VertIdx = 0; VertIdx < NumOutputVerts; VertIdx++)
@@ -195,7 +197,24 @@ void URuntimeMeshComponent::GetSectionFromRuntimeMesh(URuntimeMeshComponent* InM
 			Vertices[VertIdx] = Vert.Position;
 			Normals[VertIdx] = Vert.Normal;
 			UVs[VertIdx] = Vert.UVs[0];
-			Tangents[VertIdx] = Vert.Tangent;
+	
+
+			//dumb fix just to get the tangents to have the correct flip
+			if (Vert.Normal.W > 0.f)
+			{
+				Tangents[VertIdx] = Vert.Tangent;
+				Tangents[VertIdx].bFlipTangentY = false;
+			}
+
+			else
+			{
+				Tangents[VertIdx] = Vert.Tangent;
+				Tangents[VertIdx].bFlipTangentY = true;
+			}
+
+			//Tangents[VertIdx] = Vert.Tangent,Vert.Normal.W > 0.f ? true : false;
+
+			Colors[VertIdx] = Vert.Color;
 		}
 
 		// Copy index buffer
